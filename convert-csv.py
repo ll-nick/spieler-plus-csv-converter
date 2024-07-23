@@ -12,7 +12,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--home-team",
         required=True,
-        help="Name of the home team as it appers in the input csv",
+        help="Name of the home team as it appears in the input csv",
     )
     args = parser.parse_args()
 
@@ -31,23 +31,35 @@ if __name__ == "__main__":
     # Process the rows and convert the data format
     with open(input_file, "r", newline="", encoding="ISO-8859-1") as file:
         reader = csv.DictReader(file, delimiter=";")
-        for input_row in reader:
-            home_game = True if (input_row["Mannschaft 1"] == args.home_team) else False
+        rows = list(reader)
+
+    for i in range(0, len(rows), 2):
+        game1 = rows[i]
+        game2 = rows[i + 1]
+
+        for j, game in enumerate([game1, game2]):
+            if (
+                game["Mannschaft 1"] != args.home_team
+                and game["Mannschaft 2"] != args.home_team
+            ):
+                continue
+
+            home_game = True if (game["Mannschaft 1"] == args.home_team) else False
 
             output_row = {}
-            output_row["Spieltyp"] = "Spiel"
+            output_row["Spieltyp"] = f"Spiel{j+1}"
             output_row["Gegner"] = (
-                input_row["Mannschaft 2"] if home_game else input_row["Mannschaft 1"]
+                game["Mannschaft 2"] if home_game else game["Mannschaft 1"]
             )
-            output_row["Start-Datum"] = input_row["Datum"]
+            output_row["Start-Datum"] = game["Datum"]
             output_row["End-Datum (Optional)"] = ""
-            output_row["Start-Zeit"] = input_row["Uhrzeit"]
+            output_row["Start-Zeit"] = game["Uhrzeit"]
             output_row["Treffen (Optional)"] = ""
             output_row["End-Zeit (Optional)"] = ""
             output_row["Heimspiel"] = "ja" if home_game else "nein"
             output_row["Gelände / Räumlichkeiten"] = ""
-            output_row["Adresse (optional)"] = input_row["Austragungsort"]
-            output_row["Infos zum Spiel"] = "Spiel #" + input_row["#"]
+            output_row["Adresse (optional)"] = game["Austragungsort"]
+            output_row["Infos zum Spiel"] = "Spiel #" + game["#"]
             output_row["Teilname"] = "Spieler müssen zusagen"
             output_row["Nominierung"] = "Trainer,Spieler"
             output_row["Zu-/Absagen bis (Stunden vor dem Termin)"] = 48
