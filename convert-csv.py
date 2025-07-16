@@ -1,8 +1,8 @@
 #!/bin/env python3
 
-import csv
 import argparse
-from typing import List, Dict
+import csv
+from typing import cast
 
 
 def parse_arguments():
@@ -10,8 +10,8 @@ def parse_arguments():
         prog="spieler-plus-csv-converter.py",
         description="Convert csv files downloaded from volleyball-nordbaden.de to import them to Spieler Plus.",
     )
-    parser.add_argument("filename")
-    parser.add_argument(
+    _ = parser.add_argument("filename")
+    _ = parser.add_argument(
         "--home-team",
         required=True,
         help="Name of the home team as it appears in the input csv",
@@ -19,18 +19,18 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def read_csv(input_file: str) -> List[Dict[str, str]]:
+def read_csv(input_file: str) -> list[dict[str, str]]:
     with open(input_file, "r", newline="", encoding="ISO-8859-1") as file:
         reader = csv.DictReader(file, delimiter=";")
         return list(reader)
 
 
 def create_output_row(
-    game: Dict[str, str], home_team: str, game_number: int
-) -> Dict[str, str]:
+    game: dict[str, str], home_team: str, game_number: int
+) -> dict[str, str | int]:
     home_game = True if (game["Mannschaft 1"] == home_team) else False
 
-    output_row = {}
+    output_row: dict[str, str | int] = {}
     output_row["Spieltyp"] = f"Spiel{game_number}"
     output_row["Gegner"] = game["Mannschaft 2"] if home_game else game["Mannschaft 1"]
     output_row["Start-Datum"] = game["Datum"]
@@ -50,8 +50,10 @@ def create_output_row(
     return output_row
 
 
-def process_data(rows: List[Dict[str, str]], home_team: str) -> List[Dict[str, str]]:
-    output_data = []
+def process_data(
+    rows: list[dict[str, str]], home_team: str
+) -> list[dict[str, str | int]]:
+    output_data: list[dict[str, str | int]] = []
 
     for i in range(0, len(rows), 2):
         game1 = rows[i]
@@ -69,7 +71,7 @@ def process_data(rows: List[Dict[str, str]], home_team: str) -> List[Dict[str, s
     return output_data
 
 
-def write_csv(output_file: str, output_data: List[Dict[str, str]]):
+def write_csv(output_file: str, output_data: list[dict[str, str | int]]) -> None:
     with open(output_file, "w", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=output_data[0].keys(), delimiter=";")
         writer.writeheader()
@@ -78,17 +80,18 @@ def write_csv(output_file: str, output_data: List[Dict[str, str]]):
 
 def main():
     args = parse_arguments()
+    home_team: str = cast(str, args.home_team).strip()
     print(
         "Starting to convert csv file assuming that home team is called '"
-        + args.home_team
+        + home_team
         + "'."
     )
 
-    input_file = args.filename
+    input_file = cast(str, args.filename)
     output_file = "spielerplus.csv"
 
     rows = read_csv(input_file)
-    output_data = process_data(rows, args.home_team)
+    output_data = process_data(rows, home_team)
     write_csv(output_file, output_data)
 
     print(
