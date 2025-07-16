@@ -25,13 +25,11 @@ def read_csv(input_file: str) -> list[dict[str, str]]:
         return list(reader)
 
 
-def create_output_row(
-    game: dict[str, str], home_team: str, game_number: int
-) -> dict[str, str | int]:
+def create_output_row(game: dict[str, str], home_team: str) -> dict[str, str | int]:
     home_game = True if (game["Mannschaft 1"] == home_team) else False
 
     output_row: dict[str, str | int] = {}
-    output_row["Spieltyp"] = f"Spiel{game_number}"
+    output_row["Spieltyp"] = "Spiel"
     output_row["Gegner"] = game["Mannschaft 2"] if home_game else game["Mannschaft 1"]
     output_row["Start-Datum"] = game["Datum"]
     output_row["End-Datum (Optional)"] = ""
@@ -55,18 +53,13 @@ def process_data(
 ) -> list[dict[str, str | int]]:
     output_data: list[dict[str, str | int]] = []
 
-    for i in range(0, len(rows), 2):
-        game1 = rows[i]
-        game2 = rows[i + 1]
+    for game in rows:
+        # We don't play this one, no need to import it
+        if game["Mannschaft 1"] != home_team and game["Mannschaft 2"] != home_team:
+            continue
 
-        for index, game in enumerate([game1, game2]):
-            # We don't play this one, no need to import it
-            if game["Mannschaft 1"] != home_team and game["Mannschaft 2"] != home_team:
-                continue
-
-            game_number = index + 1
-            output_row = create_output_row(game, home_team, game_number)
-            output_data.append(output_row)
+        output_row = create_output_row(game, home_team)
+        output_data.append(output_row)
 
     return output_data
 
